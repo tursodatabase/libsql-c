@@ -193,16 +193,20 @@ static LOGGER: OnceCell<unsafe extern "C" fn(c::libsql_log_t)> = OnceCell::new()
 static SETUP: Once = Once::new();
 
 #[no_mangle]
-pub extern "C" fn libsql_setup(config: c::libsql_config_t) {
-    if let Some(logger) = config.logger.as_ref() {
-        LOGGER.set(*logger).unwrap();
-    }
-
+pub extern "C" fn libsql_setup(config: c::libsql_config_t) -> *const c::libsql_error_t {
     let callback = |log: libsql_log_t| {
         if let Some(logger) = LOGGER.get() {
             unsafe { logger(log) }
         }
     };
+
+    if let Some(logger) = config.logger.as_ref() {
+        if let Err(_) = LOGGER.set(*logger) {
+            return CString::new("attempted to set the logger more than once")
+                .unwrap()
+                .into_raw() as *mut c::libsql_error_t;
+        }
+    }
 
     SETUP.call_once(|| {
         tracing_subscriber::registry()
@@ -210,6 +214,8 @@ pub extern "C" fn libsql_setup(config: c::libsql_config_t) {
             .with(CallbackLayer { callback })
             .init();
     });
+
+    ptr::null()
 }
 
 #[no_mangle]
@@ -238,17 +244,21 @@ pub extern "C" fn libsql_database_init(desc: c::libsql_database_desc_t) -> c::li
             .not()
             .then(|| unsafe { CStr::from_ptr(desc.auth_token) });
 
-        let key = desc
-            .key
+        let encryption_key = desc
+            .encryption_key
             .is_null()
             .not()
-            .then(|| unsafe { CStr::from_ptr(desc.key) });
+            .then(|| unsafe { CStr::from_ptr(desc.encryption_key) });
 
         let db = match (path, url, auth_token) {
+            (None, None, None) => {
+                let db = libsql::Builder::new_local(":memory:");
+                RT.block_on(db.build())
+            }
             (Some(path), None, None) => {
                 let db = libsql::Builder::new_local(path.to_str()?);
 
-                let db = match (desc.cypher, key) {
+                let db = match (desc.cypher, encryption_key) {
                     (
                         c::libsql_cypher_t::LIBSQL_CYPHER_AES256
                         | c::libsql_cypher_t::LIBSQL_CYPHER_DEFAULT,
@@ -292,7 +302,7 @@ pub extern "C" fn libsql_database_init(desc: c::libsql_database_desc_t) -> c::li
                 // read_your_writes is true by default.
                 .read_your_writes(desc.not_read_your_writes.not());
 
-                let db = match (desc.cypher, key) {
+                let db = match (desc.cypher, encryption_key) {
                     (
                         c::libsql_cypher_t::LIBSQL_CYPHER_AES256
                         | c::libsql_cypher_t::LIBSQL_CYPHER_DEFAULT,
@@ -926,26 +936,6 @@ mod tests {
     };
 
     #[test]
-    fn invalid_database_description() -> Result<()> {
-        unsafe {
-            let desc = libsql_database_desc_t {
-                ..Default::default()
-            };
-
-            let db = libsql_database_init(desc);
-
-            assert!(db.err.is_null().not());
-            assert_eq!(
-                "invalid database description",
-                CStr::from_ptr(libsql_error_message(db.err)).to_str()?
-            );
-            libsql_error_deinit(db.err);
-
-            Ok(())
-        }
-    }
-
-    #[test]
     fn memory_database() -> Result<()> {
         unsafe {
             println!("hello");
@@ -956,7 +946,6 @@ mod tests {
             });
 
             let desc = libsql_database_desc_t {
-                path: path.as_ptr(),
                 ..Default::default()
             };
 
@@ -968,7 +957,7 @@ mod tests {
 
             let sql = CString::new("select :named")?;
             let stmt = libsql_connection_prepare(conn, sql.as_ptr());
-            assert!(conn.err.is_null());
+            assert!(stmt.err.is_null());
 
             let name = CString::new(":named")?;
             let bind = libsql_statement_bind_named(stmt, name.as_ptr(), libsql_integer(1));
@@ -1013,9 +1002,10 @@ mod tests {
             println!("hello");
             let path = CString::new("./test.db")?;
 
-            libsql_setup(libsql_config_t {
+            let setup = libsql_setup(libsql_config_t {
                 ..Default::default()
             });
+            assert!(setup.is_null());
 
             let desc = libsql_database_desc_t {
                 path: path.as_ptr(),
@@ -1028,42 +1018,52 @@ mod tests {
             let conn = libsql_database_connect(db);
             assert!(conn.err.is_null());
 
-            let sql = CString::new("select :named")?;
-            let stmt = libsql_connection_prepare(conn, sql.as_ptr());
-            assert!(conn.err.is_null());
+            let sql = CString::new(
+                "create table if not exists test (i integer, r real, t text, b blob);",
+            )?;
+            let batch = libsql_connection_batch(conn, sql.as_ptr());
+            assert!(batch.err.is_null());
 
-            let name = CString::new(":named")?;
+            let sql = CString::new("insert into test values (:i, :r, :t, :b)")?;
+            let stmt = libsql_connection_prepare(conn, sql.as_ptr());
+            assert!(stmt.err.is_null());
+
+            let name = CString::new(":i")?;
             let bind = libsql_statement_bind_named(stmt, name.as_ptr(), libsql_integer(1));
             assert!(bind.err.is_null());
 
-            let rows = libsql_statement_query(stmt);
-            assert!(rows.err.is_null());
+            let name = CString::new(":r")?;
+            let bind = libsql_statement_bind_named(stmt, name.as_ptr(), libsql_real(1.5));
+            assert!(bind.err.is_null());
 
-            let row = libsql_rows_next(rows);
-            assert!(row.err.is_null());
-            assert_eq!(libsql_row_empty(row), false);
-
-            let name = libsql_row_name(row, 0);
-            assert!(name.ptr.is_null().not());
-            assert_ne!(name.len, 0);
-
-            assert_eq!(
-                ":named",
-                CStr::from_ptr(name.ptr as *const c_char).to_str()?
+            let name = CString::new(":t")?;
+            let value = CString::new("test")?;
+            let bind = libsql_statement_bind_named(
+                stmt,
+                name.as_ptr(),
+                libsql_text(
+                    value.as_bytes_with_nul().as_ptr() as _,
+                    value.as_bytes_with_nul().len(),
+                ),
             );
-            libsql_slice_deinit(name);
+            assert!(bind.err.is_null());
 
-            let value = libsql_row_value(row, 0);
-            assert!(value.err.is_null());
+            let name = CString::new(":b")?;
+            let value = vec![69u8, 42u8, 00u8];
+            let bind = libsql_statement_bind_named(
+                stmt,
+                name.as_ptr(),
+                libsql_blob(value.as_slice().as_ptr() as _, value.as_slice().len()),
+            );
+            assert!(bind.err.is_null());
 
-            assert_eq!(value.ok.type_, libsql_type_t::LIBSQL_TYPE_INTEGER);
-            assert_eq!(value.ok.value.integer, 1);
+            let exec = libsql_statement_execute(stmt);
+            assert!(exec.err.is_null());
+            assert_eq!(exec.rows_changed, 1);
 
             libsql_database_deinit(db);
             libsql_connection_deinit(conn);
             libsql_statement_deinit(stmt);
-            libsql_rows_deinit(rows);
-            libsql_row_deinit(row);
 
             Ok(())
         }
