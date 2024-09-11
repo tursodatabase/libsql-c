@@ -532,7 +532,7 @@ pub extern "C" fn libsql_transaction_prepare(
 
         let sql = unsafe { CStr::from_ptr(sql) }.to_str()?;
 
-        let tx = ManuallyDrop::new(unsafe { Box::from_raw(tx.inner as *mut Connection) });
+        let tx = ManuallyDrop::new(unsafe { Box::from_raw(tx.inner as *mut Transaction) });
 
         Ok(Statement {
             inner: RT.block_on(tx.prepare(sql))?,
