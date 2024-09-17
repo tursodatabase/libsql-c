@@ -209,6 +209,8 @@ libsql_value_t libsql_real(double real);
 libsql_value_t libsql_text(const char *ptr, size_t len);
 /** Create a libsql blob value */
 libsql_value_t libsql_blob(const uint8_t *ptr, size_t len);
+/** Create a libsql null value */
+libsql_value_t libsql_null();
 
 /** Deallocate and close a error */
 void libsql_error_deinit(libsql_error_t *self);

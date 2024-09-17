@@ -814,6 +814,14 @@ pub extern "C" fn libsql_blob(ptr: *const u8, len: usize) -> c::libsql_value_t {
     }
 }
 
+#[no_mangle]
+pub extern "C" fn libsql_null() -> c::libsql_value_t {
+    c::libsql_value_t {
+        type_: c::libsql_type_t::LIBSQL_TYPE_NULL,
+        ..Default::default()
+    }
+}
+
 // == Destructors ==
 
 #[no_mangle]
@@ -910,6 +918,7 @@ const _: () = {
     let _: [unsafe extern "C" fn(_) -> _; 2] = [c::libsql_real, libsql_real];
     let _: [unsafe extern "C" fn(_, _) -> _; 2] = [c::libsql_text, libsql_text];
     let _: [unsafe extern "C" fn(_, _) -> _; 2] = [c::libsql_blob, libsql_blob];
+    let _: [unsafe extern "C" fn() -> _; 2] = [c::libsql_null, libsql_null];
 
     let _: [unsafe extern "C" fn(_) -> _; 2] = [c::libsql_error_deinit, libsql_error_deinit];
     let _: [unsafe extern "C" fn(_) -> _; 2] = [c::libsql_database_deinit, libsql_database_deinit];
