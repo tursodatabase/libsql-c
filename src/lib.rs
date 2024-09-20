@@ -51,7 +51,10 @@ mod c {
                     value: libsql_value_union_t { real },
                 },
                 libsql::Value::Text(text) => {
-                    let text = ManuallyDrop::new(CString::new(text).unwrap());
+                    let text = match text.find('\0') {
+                        Some(i) => ManuallyDrop::new(CString::new(&text[0..i]).unwrap()),
+                        None => ManuallyDrop::new(CString::new(text).unwrap()),
+                    };
                     libsql_value_t {
                         type_: libsql_type_t::LIBSQL_TYPE_TEXT,
                         value: libsql_value_union_t {
