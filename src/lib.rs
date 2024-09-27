@@ -651,6 +651,46 @@ pub extern "C" fn libsql_rows_next(rows: c::libsql_rows_t) -> c::libsql_row_t {
 }
 
 #[no_mangle]
+pub extern "C" fn libsql_rows_column_name(row: c::libsql_rows_t, idx: i32) -> c::libsql_slice_t {
+    if row.inner.is_null() {
+        return c::libsql_slice_t {
+            ptr: ptr::null(),
+            len: 0,
+        };
+    }
+
+    let rows = ManuallyDrop::new(unsafe { Box::from_raw(row.inner as *mut Rows) });
+
+    match rows.column_name(idx) {
+        None => c::libsql_slice_t {
+            ptr: ptr::null(),
+            len: 0,
+        },
+        Some(name) => {
+            let name = ManuallyDrop::new(CString::new(name).unwrap());
+
+            c::libsql_slice_t {
+                ptr: name.as_bytes_with_nul().as_ptr() as *mut c_void,
+                len: name.as_bytes_with_nul().len(),
+            }
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn libsql_rows_column_length(rows: c::libsql_rows_t) -> i32 {
+    if rows.inner.is_null() {
+        return 0;
+    }
+
+    let rows = ManuallyDrop::new(unsafe { Box::from_raw(rows.inner as *mut Rows) });
+
+    // TODO: Why `column_count` for Rows returns a i32 when for Row it returns usize?
+    rows.column_count().try_into().unwrap()
+}
+
+
+#[no_mangle]
 pub extern "C" fn libsql_row_value(row: c::libsql_row_t, idx: i32) -> c::libsql_result_value_t {
     match (move || -> anyhow::Result<libsql::Value> {
         if row.inner.is_null() {
@@ -911,6 +951,8 @@ const _: () = {
         [c::libsql_statement_bind_value, libsql_statement_bind_value];
 
     let _: [unsafe extern "C" fn(_) -> _; 2] = [c::libsql_rows_next, libsql_rows_next];
+    let _: [unsafe extern "C" fn(_, _) -> _; 2] = [c::libsql_rows_column_name, libsql_rows_column_name];
+    let _: [unsafe extern "C" fn(_) -> _; 2] = [c::libsql_rows_column_length, libsql_rows_column_length];
 
     let _: [unsafe extern "C" fn(_) -> _; 2] = [c::libsql_row_empty, libsql_row_empty];
     let _: [unsafe extern "C" fn(_) -> _; 2] = [c::libsql_row_length, libsql_row_length];
