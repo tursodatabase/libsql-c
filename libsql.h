@@ -113,6 +113,12 @@ typedef struct {
     libsql_error_t *err;
 } libsql_execute_t;
 
+typedef struct {
+    int64_t last_inserted_rowid;
+    uint64_t total_changes;
+    libsql_error_t *err;
+} libsql_connection_info_t;
+
 /**
  * Database description.
  */
@@ -160,6 +166,10 @@ libsql_transaction_t libsql_connection_transaction(libsql_connection_t self);
 /** Send a batch statement in a connection */
 libsql_batch_t
 libsql_connection_batch(libsql_connection_t self, const char *sql);
+
+/** Send a batch statement in a connection */
+libsql_connection_info_t
+libsql_connection_info(libsql_connection_t self);
 
 /** Send a batch statement in a transaction */
 libsql_batch_t

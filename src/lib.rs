@@ -456,13 +456,38 @@ pub extern "C" fn libsql_connection_batch(
 }
 
 #[no_mangle]
+pub extern "C" fn libsql_connection_info(
+    conn: c::libsql_connection_t,
+) -> c::libsql_connection_info_t {
+    match (move || -> anyhow::Result<(i64, u64)> {
+        if conn.inner.is_null() {
+            bail!("attempted to get info from a null connection")
+        }
+
+        let conn = ManuallyDrop::new(unsafe { Box::from_raw(conn.inner as *mut Connection) });
+
+        Ok((conn.last_insert_rowid(), conn.total_changes()))
+    })() {
+        Ok((last_inserted_rowid, total_changes)) => c::libsql_connection_info_t {
+            last_inserted_rowid,
+            total_changes,
+            ..Default::default()
+        },
+        Err(err) => c::libsql_connection_info_t {
+            err: CString::new(err.to_string()).unwrap().into_raw() as *mut c::libsql_error_t,
+            ..Default::default()
+        },
+    }
+}
+
+#[no_mangle]
 pub extern "C" fn libsql_transaction_batch(
     tx: c::libsql_transaction_t,
     sql: *const c_char,
 ) -> c::libsql_batch_t {
     match (move || -> anyhow::Result<_> {
         if tx.inner.is_null() {
-            bail!("attempted to init a statement with a null connection")
+            bail!("attempted execute batch statements with a null transaction")
         }
 
         if sql.is_null() {
