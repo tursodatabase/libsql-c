@@ -81,8 +81,6 @@
 
 ## Quickstart
 
-The example below uses Embedded Replicas and syncs data every 1000ms from Turso.
-
 1. Write your program:
 
    ```c
@@ -93,7 +91,7 @@ The example below uses Embedded Replicas and syncs data every 1000ms from Turso.
        libsql_setup((libsql_config_t){0});
 
        libsql_database_t db = libsql_database_init((libsql_database_desc_t){
-           .path = "test.db"
+           .path = "local.db"
        });
 
        if (db.err) {
