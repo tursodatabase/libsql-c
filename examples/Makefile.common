@@ -1,0 +1,19 @@
+CC = gcc
+LDFLAGS = -L../../target/release -Wl,-rpath,../../target/release
+LIBS = -llibsql
+
+TARGET = example
+
+all: $(TARGET)
+
+../../target/release/liblibsql.so:
+	@echo "Building libsql..."
+	@cd ../.. && cargo build --release
+
+$(TARGET): example.c ../../target/release/liblibsql.so
+	$(CC) $(LDFLAGS) -o $@ $< $(LIBS)
+
+clean:
+	rm -f $(TARGET)
+
+.PHONY: all clean

@@ -2,3 +2,5 @@
 .DS_Store
 test*.db
 *.o
+local.db
+example
