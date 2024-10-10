@@ -134,6 +134,15 @@
    ./example
    ```
 
+## Examples
+
+- [Local](/examples/local)
+- [Remote](/examples/remote)
+- [Sync](/examples/sync)
+- [Vector](/examples/vector)
+- [Transactions](/examples/transactions)
+- [Batch](/examples/batch)
+
 ## Documentation
 
 Visit our [official documentation](https://docs.turso.tech/sdk/c).
