@@ -1,6 +1,6 @@
 # Vector
 
-This example demonstrates how to use libsql vector search with a local database.
+This example demonstrates how to use libSQL vector search with a local database.
 
 ## Building
 

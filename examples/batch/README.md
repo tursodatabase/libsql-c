@@ -1,6 +1,6 @@
 # Batch
 
-This example demonstrates how to use libsql to execute a batch of SQL statements.
+This example demonstrates how to use libSQL to execute a batch of SQL statements.
 
 ## Building
 

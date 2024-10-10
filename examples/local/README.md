@@ -1,6 +1,6 @@
 # Local
 
-This example demonstrates how to use libsql with a local SQLite file.
+This example demonstrates how to use libSQL with a local SQLite file.
 
 ## Building
 

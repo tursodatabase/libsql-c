@@ -1,6 +1,6 @@
 # Sync
 
-This example demonstrates how to use libsql with a synced database (local file synced with a remote database).
+This example demonstrates how to use libSQL with a synced database (local file synced with a remote database).
 
 ## Building
 

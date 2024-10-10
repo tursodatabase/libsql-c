@@ -1,6 +1,6 @@
 # Remote
 
-This example demonstrates how to use libsql with a remote database.
+This example demonstrates how to use libSQL with a remote database.
 
 ## Building
 

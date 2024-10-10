@@ -1,6 +1,6 @@
 # Transactions
 
-This example demonstrates how to use transactions with libsql. It shows how to start a transaction, perform multiple operations, and then commit or rollback the transaction.
+This example demonstrates how to use transactions with libSQL.
 
 ## Building
 
