@@ -136,7 +136,7 @@ typedef struct {
     /** Cypher to be used with `encryption_key` */
     libsql_cypher_t cypher;
     /** If set, disable `read_your_writes`. To mantain consistency. */
-    bool not_read_your_writes;
+    bool disable_read_your_writes;
     /** Enable Webpki connector */
     bool webpki;
 } libsql_database_desc_t;

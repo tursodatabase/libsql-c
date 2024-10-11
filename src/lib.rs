@@ -303,7 +303,7 @@ pub extern "C" fn libsql_database_init(desc: c::libsql_database_desc_t) -> c::li
                 )
                 // NOTE: This is done so that the default zero initialization respects that
                 // read_your_writes is true by default.
-                .read_your_writes(desc.not_read_your_writes.not());
+                .read_your_writes(desc.disable_read_your_writes.not());
 
                 let db = match (desc.cypher, encryption_key) {
                     (
