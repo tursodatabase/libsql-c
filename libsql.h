@@ -50,11 +50,6 @@ typedef struct {
 typedef struct {
     libsql_error_t *err;
     void *inner;
-} libsql_parameters_t;
-
-typedef struct {
-    libsql_error_t *err;
-    void *inner;
 } libsql_statement_t;
 
 typedef struct {
