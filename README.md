@@ -136,16 +136,16 @@
 
 ## Examples
 
-| Example                               | Description                                                                                                                                                                      |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| [local](examples/local)               | Demonstrates how to use libsql with a local SQLite database file. Creates a database, inserts data, and performs queries.                                                        |
-| [remote](examples/remote)             | Shows how to connect to a remote database using libsql. Requires setting up environment variables for the database URL and authentication token.                                 |
-| [sync](examples/sync)                 | Illustrates the use of libsql's synchronization features. Creates a local database that syncs with a remote database, demonstrating how to handle offline and online operations. |
-| [batch](examples/batch)               | Demonstrates how to execute multiple SQL statements in a single batch operation using libsql. Useful for efficient execution of multiple related operations.                     |
-| [transactions](examples/transactions) | Shows how to use transactions in libsql. Demonstrates starting a transaction, performing multiple operations, and committing or rolling back changes.                            |
-| [memory](examples/memory)             | Illustrates the use of an in-memory SQLite database with libsql. Useful for temporary storage, testing, or scenarios requiring fast access without data persistence.             |
-| [vector](examples/vector)             | Demonstrates how to work with vector embeddings in libsql, including storing and querying vector data for similarity search.                                                     |
-| [encryption](examples/encryption)     | Demonstrates how to create and use an encrypted SQLite database with libsql. Shows setting up encryption, writing data, and reading from an encrypted database.                  |
+| Example                               | Description                                                                             |
+| ------------------------------------- | --------------------------------------------------------------------------------------- |
+| [local](examples/local)               | Uses libsql with a local SQLite file. Creates database, inserts data, and queries.      |
+| [remote](examples/remote)             | Connects to a remote database. Requires environment variables for URL and auth token.   |
+| [sync](examples/sync)                 | Demonstrates synchronization between local and remote databases.                        |
+| [batch](examples/batch)               | Executes multiple SQL statements in a single batch operation.                           |
+| [transactions](examples/transactions) | Shows transaction usage: starting, performing operations, and committing/rolling back.  |
+| [memory](examples/memory)             | Uses an in-memory SQLite database for temporary storage or fast access.                 |
+| [vector](examples/vector)             | Works with vector embeddings, storing and querying for similarity search.               |
+| [encryption](examples/encryption)     | Creates and uses an encrypted SQLite database, demonstrating setup and data operations. |
 
 ## Documentation
 
