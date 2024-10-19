@@ -138,6 +138,7 @@ typedef struct {
 
 typedef struct {
     void (*logger)(libsql_log_t log);
+    const char *version;
 } libsql_config_t;
 
 /** Setup some global info */

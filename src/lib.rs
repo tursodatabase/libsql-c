@@ -193,6 +193,7 @@ where
 }
 
 static LOGGER: OnceCell<unsafe extern "C" fn(c::libsql_log_t)> = OnceCell::new();
+static VERSION: OnceCell<String> = OnceCell::new();
 static SETUP: Once = Once::new();
 
 #[no_mangle]
@@ -206,6 +207,15 @@ pub extern "C" fn libsql_setup(config: c::libsql_config_t) -> *const c::libsql_e
     if let Some(logger) = config.logger.as_ref() {
         if let Err(_) = LOGGER.set(*logger) {
             return CString::new("attempted to set the logger more than once")
+                .unwrap()
+                .into_raw() as *mut c::libsql_error_t;
+        }
+    }
+
+    if config.version.is_null().not() {
+        let s = unsafe { CStr::from_ptr(config.version) };
+        if let Err(_) = VERSION.set(s.to_string_lossy().to_string()) {
+            return CString::new("attempted to set the version more than once")
                 .unwrap()
                 .into_raw() as *mut c::libsql_error_t;
         }
@@ -293,6 +303,12 @@ pub extern "C" fn libsql_database_init(desc: c::libsql_database_desc_t) -> c::li
                     db
                 };
 
+                let db = if let Some(version) = VERSION.get() {
+                    db.version(version.to_owned())
+                } else {
+                    db
+                };
+
                 RT.block_on(db.build())
             }
             (Some(path), Some(url), Some(auth_token)) => {
@@ -331,6 +347,12 @@ pub extern "C" fn libsql_database_init(desc: c::libsql_database_desc_t) -> c::li
                         .build();
 
                     db.connector(connector)
+                } else {
+                    db
+                };
+
+                let db = if let Some(version) = VERSION.get() {
+                    db.version(version.to_owned())
                 } else {
                     db
                 };
@@ -714,7 +736,6 @@ pub extern "C" fn libsql_rows_column_length(rows: c::libsql_rows_t) -> i32 {
     rows.column_count().try_into().unwrap()
 }
 
-
 #[no_mangle]
 pub extern "C" fn libsql_row_value(row: c::libsql_row_t, idx: i32) -> c::libsql_result_value_t {
     match (move || -> anyhow::Result<libsql::Value> {
@@ -976,8 +997,10 @@ const _: () = {
         [c::libsql_statement_bind_value, libsql_statement_bind_value];
 
     let _: [unsafe extern "C" fn(_) -> _; 2] = [c::libsql_rows_next, libsql_rows_next];
-    let _: [unsafe extern "C" fn(_, _) -> _; 2] = [c::libsql_rows_column_name, libsql_rows_column_name];
-    let _: [unsafe extern "C" fn(_) -> _; 2] = [c::libsql_rows_column_length, libsql_rows_column_length];
+    let _: [unsafe extern "C" fn(_, _) -> _; 2] =
+        [c::libsql_rows_column_name, libsql_rows_column_name];
+    let _: [unsafe extern "C" fn(_) -> _; 2] =
+        [c::libsql_rows_column_length, libsql_rows_column_length];
 
     let _: [unsafe extern "C" fn(_) -> _; 2] = [c::libsql_row_empty, libsql_row_empty];
     let _: [unsafe extern "C" fn(_) -> _; 2] = [c::libsql_row_length, libsql_row_length];
@@ -1017,9 +1040,6 @@ mod tests {
     #[test]
     fn memory_database() -> Result<()> {
         unsafe {
-            println!("hello");
-            let path = CString::new(":memory:")?;
-
             libsql_setup(libsql_config_t {
                 ..Default::default()
             });
@@ -1078,10 +1098,11 @@ mod tests {
     #[test]
     fn test_database() -> Result<()> {
         unsafe {
-            println!("hello");
             let path = CString::new("./test.db")?;
+            let version = CString::new("libsql-c")?;
 
             let setup = libsql_setup(libsql_config_t {
+                version: version.as_ptr(),
                 ..Default::default()
             });
             assert!(setup.is_null());
