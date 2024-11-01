@@ -27,6 +27,7 @@
           with pkgs;
           mkShell {
             nativeBuildInputs = [
+              zig
               pkg-config
             ];
 
