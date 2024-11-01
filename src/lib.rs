@@ -672,6 +672,18 @@ pub extern "C" fn libsql_statement_reset(stmt: c::libsql_statement_t) {
 }
 
 #[no_mangle]
+pub extern "C" fn libsql_statement_column_count(stmt: c::libsql_statement_t) -> usize {
+    if stmt.inner.is_null() {
+        // TODO: Should we just panic! here?
+        return 0;
+    }
+
+    let stmt = ManuallyDrop::new(unsafe { Box::from_raw(stmt.inner as *mut Statement) });
+
+    stmt.inner.columns().len()
+}
+
+#[no_mangle]
 pub extern "C" fn libsql_rows_next(rows: c::libsql_rows_t) -> c::libsql_row_t {
     match (move || -> anyhow::Result<Option<Row>> {
         if rows.inner.is_null() {
@@ -986,6 +998,7 @@ const _: () = {
     let _: [unsafe extern "C" fn(_, _) -> _; 2] =
         [c::libsql_transaction_prepare, libsql_transaction_prepare];
 
+    let _: [unsafe extern "C" fn(_) -> _; 2] = [c::libsql_statement_column_count, libsql_statement_column_count];
     let _: [unsafe extern "C" fn(_) -> _; 2] = [c::libsql_statement_query, libsql_statement_query];
     let _: [unsafe extern "C" fn(_) -> _; 2] =
         [c::libsql_statement_execute, libsql_statement_execute];

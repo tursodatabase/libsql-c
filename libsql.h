@@ -183,6 +183,8 @@ libsql_execute_t libsql_statement_execute(libsql_statement_t self);
 libsql_rows_t libsql_statement_query(libsql_statement_t self);
 /** Reset a statement */
 void libsql_statement_reset(libsql_statement_t self);
+/** Column count */
+size_t libsql_statement_column_count(libsql_statement_t self);
 
 /** Get the next row from rows */
 libsql_row_t libsql_rows_next(libsql_rows_t self);
