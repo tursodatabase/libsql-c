@@ -21,4 +21,4 @@ tracing = "0.1.40"
 once_cell = "1.19.0"
 
 [build-dependencies]
-bindgen = "0.65.1"
+bindgen = "0.69.5"

@@ -33,7 +33,7 @@ mod c {
         mem::ManuallyDrop,
     };
 
-    include!(concat!(env!("OUT_DIR"), "/bindings.rs"));
+    include!("bindings.rs");
 
     impl From<libsql::Value> for libsql_value_t {
         fn from(value: libsql::Value) -> Self {

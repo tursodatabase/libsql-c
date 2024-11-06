@@ -4,3 +4,4 @@ test*.db
 *.o
 local.db
 example
+.direnv/
