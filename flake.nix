@@ -42,14 +42,16 @@
               ];
 
               CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-Ctarget-feature=-crt-static";
-              CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_LINKER =
-                "${pkgs.pkgsCross.musl64.stdenv.cc}/bin/x86_64-unknown-linux-musl-gcc";
+              CC_x86_64_unknown_linux_gnu =
+                "${pkgs.pkgsCross.gnu64.stdenv.cc}/bin/x86_64-unknown-linux-gnu-gcc";
+              CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER =
+                "${pkgs.pkgsCross.gnu64.stdenv.cc}/bin/x86_64-unknown-linux-gnu-gcc";
 
-              CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-Ctarget-feature=-crt-static";
-              CC_aarch64_unknown_linux_musl =
-                "${pkgs.pkgsCross.aarch64-multiplatform-musl.stdenv.cc}/bin/aarch64-unknown-linux-musl-gcc";
-              CARGO_TARGET_AARCH64_UNKNOWN_LINUX_MUSL_LINKER =
-                "${pkgs.pkgsCross.aarch64-multiplatform-musl.stdenv.cc}/bin/aarch64-unknown-linux-musl-gcc";
+              CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_RUSTFLAGS="-Ctarget-feature=-crt-static";
+              CC_aarch64_unknown_linux_gnu =
+                "${pkgs.pkgsCross.aarch64-multiplatform.stdenv.cc}/bin/aarch64-unknown-linux-gnu-gcc";
+              CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER =
+                "${pkgs.pkgsCross.aarch64-multiplatform.stdenv.cc}/bin/aarch64-unknown-linux-gnu-gcc";
             };
         });
 }
