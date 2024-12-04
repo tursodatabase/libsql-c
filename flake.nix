@@ -3,15 +3,11 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-unstable";
-    rust-overlay = {
-      url = "github:oxalica/rust-overlay";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     flake-utils = {
       url = "github:numtide/flake-utils";
     };
   };
-  outputs = { self, nixpkgs, flake-utils, rust-overlay }:
+  outputs = { self, nixpkgs, flake-utils }:
     flake-utils.lib.eachDefaultSystem
       (system:
         let
@@ -26,7 +22,6 @@
             with pkgs;
             mkShell {
               nativeBuildInputs = [
-                zig
                 pkg-config
                 rust-bindgen
                 cmake
@@ -40,6 +35,16 @@
                 darwin.apple_sdk.frameworks.SystemConfiguration
                 darwin.apple_sdk.frameworks.CoreServices
               ];
+
+              CARGO_TARGET_X86_64_APPLE_DARWIN_RUSTFLAGS= lib.lists.fold (a: b: "${a} ${b}") "" [
+                "-Ctarget-feature=-crt-static"
+                "-Clink-arg=-target"
+                "-Clink-arg=x86_64-apple-darwin"
+              ];
+              CC_x86_64_apple_darwin =
+                "${pkgs.pkgsCross.x86_64-darwin.stdenv.cc}/bin/x86_64-apple-darwin-clang";
+              CARGO_TARGET_X86_64_APPLE_DARWIN_LINKER =
+                "${pkgs.pkgsCross.x86_64-darwin.stdenv.cc}/bin/x86_64-apple-darwin-clang";
 
               CARGO_TARGET_X86_64_UNKNOWN_LINUX_MUSL_RUSTFLAGS="-Ctarget-feature=-crt-static";
               CC_x86_64_unknown_linux_gnu =

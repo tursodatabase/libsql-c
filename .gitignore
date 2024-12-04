@@ -1,6 +1,6 @@
 /target
 .DS_Store
-test*.db
+test*.db*
 *.o
 local.db
 example

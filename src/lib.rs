@@ -283,7 +283,12 @@ pub extern "C" fn libsql_database_init(desc: c::libsql_database_desc_t) -> c::li
                     _ => db,
                 };
 
-                RT.block_on(db.build())
+                RT.block_on(async {
+                    let db = db.build().await?;
+                    let conn = db.connect()?;
+                    conn.query("PRAGMA journal_mode=WAL", ()).await?;
+                    Ok(db)
+                })
             }
             (None, Some(url), Some(auth_token)) => {
                 let db = libsql::Builder::new_remote(
@@ -998,7 +1003,10 @@ const _: () = {
     let _: [unsafe extern "C" fn(_, _) -> _; 2] =
         [c::libsql_transaction_prepare, libsql_transaction_prepare];
 
-    let _: [unsafe extern "C" fn(_) -> _; 2] = [c::libsql_statement_column_count, libsql_statement_column_count];
+    let _: [unsafe extern "C" fn(_) -> _; 2] = [
+        c::libsql_statement_column_count,
+        libsql_statement_column_count,
+    ];
     let _: [unsafe extern "C" fn(_) -> _; 2] = [c::libsql_statement_query, libsql_statement_query];
     let _: [unsafe extern "C" fn(_) -> _; 2] =
         [c::libsql_statement_execute, libsql_statement_execute];
@@ -1041,7 +1049,7 @@ const _: () = {
 
 #[cfg(test)]
 mod tests {
-    use crate::{libsql_database_deinit, libsql_setup};
+    use crate::{libsql_database_deinit, libsql_row_empty, libsql_setup};
 
     use super::c::*;
     use anyhow::Result;
@@ -1177,6 +1185,114 @@ mod tests {
             libsql_database_deinit(db);
             libsql_connection_deinit(conn);
             libsql_statement_deinit(stmt);
+
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn test_multiconnection() -> Result<()> {
+        unsafe {
+            let path = CString::new("./test2.db")?;
+            let key = CString::new("super_secret")?;
+
+            let desc = libsql_database_desc_t {
+                path: path.as_ptr(),
+                encryption_key: key.as_ptr(),
+                ..Default::default()
+            };
+
+            let db = libsql_database_init(desc);
+            assert!(
+                db.err.is_null(),
+                "{:?}",
+                CStr::from_ptr(libsql_error_message(db.err))
+            );
+
+            {
+                let conn = libsql_database_connect(db);
+                assert!(conn.err.is_null());
+
+                let sql = CString::new("create table if not exists test (i integer);")?;
+                let batch = libsql_connection_batch(conn, sql.as_ptr());
+                assert!(
+                    batch.err.is_null(),
+                    "{:?}",
+                    CStr::from_ptr(libsql_error_message(batch.err))
+                );
+
+                // leak connection
+            }
+
+            {
+                let conn = libsql_database_connect(db);
+                assert!(
+                    conn.err.is_null(),
+                    "{:?}",
+                    CStr::from_ptr(libsql_error_message(conn.err))
+                );
+
+                let sql = CString::new("insert into test values (1)")?;
+                let stmt = libsql_connection_prepare(conn, sql.as_ptr());
+                assert!(
+                    stmt.err.is_null(),
+                    "{:?}",
+                    CStr::from_ptr(libsql_error_message(stmt.err)),
+                );
+
+                let exec = libsql_statement_execute(stmt);
+                assert!(
+                    exec.err.is_null(),
+                    "{:?}",
+                    CStr::from_ptr(libsql_error_message(stmt.err)),
+                );
+                assert_eq!(exec.rows_changed, 1);
+
+                libsql_connection_deinit(conn);
+                libsql_statement_deinit(stmt);
+
+                // leak connection
+            }
+
+            {
+                let conn = libsql_database_connect(db);
+                assert!(
+                    conn.err.is_null(),
+                    "{:?}",
+                    CStr::from_ptr(libsql_error_message(conn.err))
+                );
+
+                let sql = CString::new("select i from test")?;
+                let stmt = libsql_connection_prepare(conn, sql.as_ptr());
+                assert!(
+                    stmt.err.is_null(),
+                    "{:?}",
+                    CStr::from_ptr(libsql_error_message(stmt.err)),
+                );
+
+                let rows = libsql_statement_query(stmt);
+                assert!(
+                    rows.err.is_null(),
+                    "{:?}",
+                    CStr::from_ptr(libsql_error_message(rows.err)),
+                );
+
+                loop {
+                    let row = libsql_rows_next(rows);
+                    if libsql_row_empty(row) {
+                        break;
+                    }
+
+                    dbg!(libsql_row_value(row, 0).ok.value.integer);
+                }
+
+                libsql_connection_deinit(conn);
+                libsql_statement_deinit(stmt);
+
+                // leak connection
+            }
+
+            libsql_database_deinit(db);
 
             Ok(())
         }
