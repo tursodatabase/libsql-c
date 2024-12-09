@@ -316,11 +316,14 @@ pub extern "C" fn libsql_database_init(desc: c::libsql_database_desc_t) -> c::li
 
                 RT.block_on(db.build())
             }
-            (Some(path), Some(url), Some(auth_token)) => {
+            (Some(path), Some(url), auth_token) => {
                 let db = libsql::Builder::new_remote_replica(
                     path.to_str()?,
                     url.to_str()?.to_string(),
-                    auth_token.to_str()?.to_string(),
+                    match auth_token {
+                        Some(s) => s.to_str()?.to_string(),
+                        None => "".to_string(),
+                    },
                 )
                 // NOTE: This is done so that the default zero initialization respects that
                 // read_your_writes is true by default.
