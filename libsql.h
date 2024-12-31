@@ -191,7 +191,7 @@ libsql_row_t libsql_rows_next(libsql_rows_t self);
 /** Get the column name at the index */
 libsql_slice_t libsql_rows_column_name(libsql_rows_t self, int32_t index);
 /** Get rows column count */
-int32_t libsql_rows_column_length(libsql_rows_t self);
+int32_t libsql_rows_column_count(libsql_rows_t self);
 
 /** Get the value at the the index */
 libsql_result_value_t libsql_row_value(libsql_row_t self, int32_t index);

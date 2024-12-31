@@ -764,7 +764,7 @@ pub extern "C" fn libsql_rows_column_name(row: c::libsql_rows_t, idx: i32) -> c:
 
 #[no_mangle]
 #[signature(c)]
-pub extern "C" fn libsql_rows_column_length(rows: c::libsql_rows_t) -> i32 {
+pub extern "C" fn libsql_rows_column_count(rows: c::libsql_rows_t) -> i32 {
     if rows.inner.is_null() {
         return 0;
     }
