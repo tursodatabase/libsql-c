@@ -20,6 +20,7 @@ use tracing_subscriber::{
     util::SubscriberInitExt,
     EnvFilter, Layer,
 };
+use libsql_c_macros::signature;
 
 mod c {
     #![allow(non_upper_case_globals)]
@@ -197,6 +198,7 @@ static VERSION: OnceCell<String> = OnceCell::new();
 static SETUP: Once = Once::new();
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_setup(config: c::libsql_config_t) -> *const c::libsql_error_t {
     let callback = |log: libsql_log_t| {
         if let Some(logger) = LOGGER.get() {
@@ -232,11 +234,13 @@ pub extern "C" fn libsql_setup(config: c::libsql_config_t) -> *const c::libsql_e
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_error_message(err: *mut c::libsql_error_t) -> *const c_char {
     err as *mut c_char
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_database_init(desc: c::libsql_database_desc_t) -> c::libsql_database_t {
     match (|| -> anyhow::Result<Database> {
         let path = desc
@@ -384,6 +388,7 @@ pub extern "C" fn libsql_database_init(desc: c::libsql_database_desc_t) -> c::li
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_database_sync(db: c::libsql_database_t) -> c::libsql_sync_t {
     match (|| -> anyhow::Result<Replicated> {
         if db.inner.is_null() {
@@ -410,6 +415,7 @@ pub extern "C" fn libsql_database_sync(db: c::libsql_database_t) -> c::libsql_sy
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_database_connect(db: c::libsql_database_t) -> c::libsql_connection_t {
     match (|| -> anyhow::Result<Connection> {
         if db.inner.is_null() {
@@ -432,6 +438,7 @@ pub extern "C" fn libsql_database_connect(db: c::libsql_database_t) -> c::libsql
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_connection_transaction(
     conn: c::libsql_connection_t,
 ) -> c::libsql_transaction_t {
@@ -456,6 +463,7 @@ pub extern "C" fn libsql_connection_transaction(
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_connection_batch(
     conn: c::libsql_connection_t,
     sql: *const c_char,
@@ -486,6 +494,7 @@ pub extern "C" fn libsql_connection_batch(
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_connection_info(
     conn: c::libsql_connection_t,
 ) -> c::libsql_connection_info_t {
@@ -511,6 +520,7 @@ pub extern "C" fn libsql_connection_info(
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_transaction_batch(
     tx: c::libsql_transaction_t,
     sql: *const c_char,
@@ -541,6 +551,7 @@ pub extern "C" fn libsql_transaction_batch(
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_connection_prepare(
     conn: c::libsql_connection_t,
     sql: *const c_char,
@@ -575,6 +586,7 @@ pub extern "C" fn libsql_connection_prepare(
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_transaction_prepare(
     tx: c::libsql_transaction_t,
     sql: *const c_char,
@@ -609,6 +621,7 @@ pub extern "C" fn libsql_transaction_prepare(
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_statement_execute(stmt: c::libsql_statement_t) -> c::libsql_execute_t {
     match (move || -> anyhow::Result<usize> {
         if stmt.inner.is_null() {
@@ -639,6 +652,7 @@ pub extern "C" fn libsql_statement_execute(stmt: c::libsql_statement_t) -> c::li
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_statement_query(stmt: c::libsql_statement_t) -> c::libsql_rows_t {
     match (move || -> anyhow::Result<Rows> {
         if stmt.inner.is_null() {
@@ -667,6 +681,7 @@ pub extern "C" fn libsql_statement_query(stmt: c::libsql_statement_t) -> c::libs
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_statement_reset(stmt: c::libsql_statement_t) {
     if stmt.inner.is_null() {
         // TODO: Should we just panic! here?
@@ -680,6 +695,7 @@ pub extern "C" fn libsql_statement_reset(stmt: c::libsql_statement_t) {
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_statement_column_count(stmt: c::libsql_statement_t) -> usize {
     if stmt.inner.is_null() {
         // TODO: Should we just panic! here?
@@ -692,6 +708,7 @@ pub extern "C" fn libsql_statement_column_count(stmt: c::libsql_statement_t) -> 
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_rows_next(rows: c::libsql_rows_t) -> c::libsql_row_t {
     match (move || -> anyhow::Result<Option<Row>> {
         if rows.inner.is_null() {
@@ -718,6 +735,7 @@ pub extern "C" fn libsql_rows_next(rows: c::libsql_rows_t) -> c::libsql_row_t {
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_rows_column_name(row: c::libsql_rows_t, idx: i32) -> c::libsql_slice_t {
     if row.inner.is_null() {
         return c::libsql_slice_t {
@@ -745,6 +763,7 @@ pub extern "C" fn libsql_rows_column_name(row: c::libsql_rows_t, idx: i32) -> c:
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_rows_column_length(rows: c::libsql_rows_t) -> i32 {
     if rows.inner.is_null() {
         return 0;
@@ -757,6 +776,7 @@ pub extern "C" fn libsql_rows_column_length(rows: c::libsql_rows_t) -> i32 {
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_row_value(row: c::libsql_row_t, idx: i32) -> c::libsql_result_value_t {
     match (move || -> anyhow::Result<libsql::Value> {
         if row.inner.is_null() {
@@ -779,6 +799,7 @@ pub extern "C" fn libsql_row_value(row: c::libsql_row_t, idx: i32) -> c::libsql_
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_row_name(row: c::libsql_row_t, idx: i32) -> c::libsql_slice_t {
     if row.inner.is_null() {
         return c::libsql_slice_t {
@@ -806,6 +827,7 @@ pub extern "C" fn libsql_row_name(row: c::libsql_row_t, idx: i32) -> c::libsql_s
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_row_length(row: c::libsql_row_t) -> i32 {
     if row.inner.is_null() {
         return 0;
@@ -818,11 +840,13 @@ pub extern "C" fn libsql_row_length(row: c::libsql_row_t) -> i32 {
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_row_empty(row: c::libsql_row_t) -> bool {
     row.inner.is_null()
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_statement_bind_named(
     stmt: c::libsql_statement_t,
     name: *const c_char,
@@ -856,6 +880,7 @@ pub extern "C" fn libsql_statement_bind_named(
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_statement_bind_value(
     stmt: c::libsql_statement_t,
     value: c::libsql_value_t,
@@ -882,6 +907,7 @@ pub extern "C" fn libsql_statement_bind_value(
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_integer(value: i64) -> c::libsql_value_t {
     c::libsql_value_t {
         type_: c::libsql_type_t::LIBSQL_TYPE_INTEGER,
@@ -890,6 +916,7 @@ pub extern "C" fn libsql_integer(value: i64) -> c::libsql_value_t {
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_real(value: f64) -> c::libsql_value_t {
     c::libsql_value_t {
         type_: c::libsql_type_t::LIBSQL_TYPE_REAL,
@@ -898,6 +925,7 @@ pub extern "C" fn libsql_real(value: f64) -> c::libsql_value_t {
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_text(ptr: *const c_char, len: usize) -> c::libsql_value_t {
     c::libsql_value_t {
         type_: c::libsql_type_t::LIBSQL_TYPE_TEXT,
@@ -911,6 +939,7 @@ pub extern "C" fn libsql_text(ptr: *const c_char, len: usize) -> c::libsql_value
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_blob(ptr: *const u8, len: usize) -> c::libsql_value_t {
     c::libsql_value_t {
         type_: c::libsql_type_t::LIBSQL_TYPE_BLOB,
@@ -934,121 +963,61 @@ pub extern "C" fn libsql_null() -> c::libsql_value_t {
 // == Destructors ==
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_error_deinit(err: *mut c::libsql_error_t) {
     drop(unsafe { CString::from_raw(err as *mut c_char) })
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_database_deinit(db: c::libsql_database_t) {
     drop(unsafe { Box::from_raw(db.inner as *mut Database) })
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_connection_deinit(conn: c::libsql_connection_t) {
     drop(unsafe { Box::from_raw(conn.inner as *mut Connection) })
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_statement_deinit(db: c::libsql_statement_t) {
     drop(unsafe { Box::from_raw(db.inner as *mut Statement) })
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_transaction_commit(db: c::libsql_transaction_t) {
     RT.block_on(unsafe { Box::from_raw(db.inner as *mut Transaction) }.commit())
         .unwrap()
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_transaction_rollback(db: c::libsql_transaction_t) {
     RT.block_on(unsafe { Box::from_raw(db.inner as *mut Transaction) }.rollback())
         .unwrap()
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_rows_deinit(rows: c::libsql_rows_t) {
     drop(unsafe { Box::from_raw(rows.inner as *mut Rows) })
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_row_deinit(row: c::libsql_row_t) {
     drop(unsafe { Box::from_raw(row.inner as *mut Row) })
 }
 
 #[no_mangle]
+#[signature(c)]
 pub extern "C" fn libsql_slice_deinit(s: c::libsql_slice_t) {
     let s = unsafe { slice::from_raw_parts_mut(s.ptr as *mut u8, s.len) };
     drop(unsafe { Box::from_raw(s) })
 }
-
-const _: () = {
-    let _: [unsafe extern "C" fn(_) -> _; 2] = [c::libsql_setup, libsql_setup];
-    let _: [unsafe extern "C" fn(_) -> _; 2] = [c::libsql_error_message, libsql_error_message];
-
-    let _: [unsafe extern "C" fn(_) -> _; 2] = [c::libsql_database_init, libsql_database_init];
-    let _: [unsafe extern "C" fn(_) -> _; 2] = [c::libsql_database_sync, libsql_database_sync];
-
-    let _: [unsafe extern "C" fn(_) -> _; 2] =
-        [c::libsql_database_connect, libsql_database_connect];
-    let _: [unsafe extern "C" fn(_) -> _; 2] = [
-        c::libsql_connection_transaction,
-        libsql_connection_transaction,
-    ];
-
-    let _: [unsafe extern "C" fn(_, _) -> _; 2] =
-        [c::libsql_connection_batch, libsql_connection_batch];
-
-    let _: [unsafe extern "C" fn(_, _) -> _; 2] =
-        [c::libsql_transaction_batch, libsql_transaction_batch];
-
-    let _: [unsafe extern "C" fn(_, _) -> _; 2] =
-        [c::libsql_connection_prepare, libsql_connection_prepare];
-    let _: [unsafe extern "C" fn(_, _) -> _; 2] =
-        [c::libsql_transaction_prepare, libsql_transaction_prepare];
-
-    let _: [unsafe extern "C" fn(_) -> _; 2] = [
-        c::libsql_statement_column_count,
-        libsql_statement_column_count,
-    ];
-    let _: [unsafe extern "C" fn(_) -> _; 2] = [c::libsql_statement_query, libsql_statement_query];
-    let _: [unsafe extern "C" fn(_) -> _; 2] =
-        [c::libsql_statement_execute, libsql_statement_execute];
-
-    let _: [unsafe extern "C" fn(_, _, _) -> _; 2] =
-        [c::libsql_statement_bind_named, libsql_statement_bind_named];
-
-    let _: [unsafe extern "C" fn(_, _) -> _; 2] =
-        [c::libsql_statement_bind_value, libsql_statement_bind_value];
-
-    let _: [unsafe extern "C" fn(_) -> _; 2] = [c::libsql_rows_next, libsql_rows_next];
-    let _: [unsafe extern "C" fn(_, _) -> _; 2] =
-        [c::libsql_rows_column_name, libsql_rows_column_name];
-    let _: [unsafe extern "C" fn(_) -> _; 2] =
-        [c::libsql_rows_column_length, libsql_rows_column_length];
-
-    let _: [unsafe extern "C" fn(_) -> _; 2] = [c::libsql_row_empty, libsql_row_empty];
-    let _: [unsafe extern "C" fn(_) -> _; 2] = [c::libsql_row_length, libsql_row_length];
-    let _: [unsafe extern "C" fn(_, _) -> _; 2] = [c::libsql_row_value, libsql_row_value];
-    let _: [unsafe extern "C" fn(_, _) -> _; 2] = [c::libsql_row_name, libsql_row_name];
-
-    let _: [unsafe extern "C" fn(_) -> _; 2] = [c::libsql_integer, libsql_integer];
-    let _: [unsafe extern "C" fn(_) -> _; 2] = [c::libsql_real, libsql_real];
-    let _: [unsafe extern "C" fn(_, _) -> _; 2] = [c::libsql_text, libsql_text];
-    let _: [unsafe extern "C" fn(_, _) -> _; 2] = [c::libsql_blob, libsql_blob];
-    let _: [unsafe extern "C" fn() -> _; 2] = [c::libsql_null, libsql_null];
-
-    let _: [unsafe extern "C" fn(_) -> _; 2] = [c::libsql_error_deinit, libsql_error_deinit];
-    let _: [unsafe extern "C" fn(_) -> _; 2] = [c::libsql_database_deinit, libsql_database_deinit];
-    let _: [unsafe extern "C" fn(_) -> _; 2] =
-        [c::libsql_connection_deinit, libsql_connection_deinit];
-    let _: [unsafe extern "C" fn(_) -> _; 2] = [c::libsql_rows_deinit, libsql_rows_deinit];
-    let _: [unsafe extern "C" fn(_) -> _; 2] = [c::libsql_row_deinit, libsql_row_deinit];
-    let _: [unsafe extern "C" fn(_) -> _; 2] = [c::libsql_slice_deinit, libsql_slice_deinit];
-    let _: [unsafe extern "C" fn(_) -> _; 2] =
-        [c::libsql_transaction_rollback, libsql_transaction_rollback];
-    let _: [unsafe extern "C" fn(_) -> _; 2] =
-        [c::libsql_transaction_commit, libsql_transaction_commit];
-};
 
 #[cfg(test)]
 mod tests {
@@ -1193,6 +1162,7 @@ mod tests {
         }
     }
 
+    #[cfg(feature = "encryption")]
     #[test]
     fn test_multiconnection() -> Result<()> {
         unsafe {
