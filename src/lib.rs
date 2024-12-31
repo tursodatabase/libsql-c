@@ -2,25 +2,24 @@ use anyhow::bail;
 use c::libsql_log_t;
 use lazy_static::lazy_static;
 use libsql::{replication::Replicated, Connection, Database, Row, Rows, Transaction};
-use once_cell::sync::OnceCell;
 use std::{
     ffi::{c_char, c_void, CStr, CString},
     mem::ManuallyDrop,
     ops::Not,
     ptr, slice,
     sync::Once,
-    time::Duration,
+    time::{Duration, SystemTime, UNIX_EPOCH},
 };
-use tokio::runtime::Runtime;
+use tokio::{runtime::Runtime, sync::RwLock};
 
+use libsql_c_macros::signature;
 use tracing::{Event, Level, Subscriber};
 use tracing_subscriber::{
     fmt::format::Writer,
     layer::{Context, SubscriberExt},
     util::SubscriberInitExt,
-    EnvFilter, Layer,
+    Layer,
 };
-use libsql_c_macros::signature;
 
 mod c {
     #![allow(non_upper_case_globals)]
@@ -184,8 +183,23 @@ where
 
         event.record(&mut visitor);
 
+        // TODO: handle this unwrap gracefully
+        let file = CString::new(event.metadata().file().unwrap_or("")).unwrap();
+        // TODO: handle this unwrap gracefully
+        let message = CString::new(buffer).unwrap();
+        // TODO: handle this unwrap gracefully
+        let target = CString::new(event.metadata().target()).unwrap();
+
         let log = libsql_log_t {
             level,
+            target: target.as_ptr(),
+            message: message.as_ptr(), // SAFETY: `message` outlives `callback`
+            timestamp: SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .map(|t| t.as_secs())
+                .unwrap_or(0),
+            file: file.as_ptr(), // SAFETY: `message` outlives `callback`
+            line: event.metadata().line().unwrap_or(0) as usize,
             ..Default::default()
         };
 
@@ -193,39 +207,37 @@ where
     }
 }
 
-static LOGGER: OnceCell<unsafe extern "C" fn(c::libsql_log_t)> = OnceCell::new();
-static VERSION: OnceCell<String> = OnceCell::new();
+static LOGGER: RwLock<Option<unsafe extern "C" fn(c::libsql_log_t)>> = RwLock::const_new(None);
+static VERSION: RwLock<Option<String>> = RwLock::const_new(None);
 static SETUP: Once = Once::new();
 
 #[no_mangle]
 #[signature(c)]
 pub extern "C" fn libsql_setup(config: c::libsql_config_t) -> *const c::libsql_error_t {
-    let callback = |log: libsql_log_t| {
-        if let Some(logger) = LOGGER.get() {
+    fn callback(log: libsql_log_t) {
+        let Ok(logger) = LOGGER.try_read() else {
+            return;
+        };
+
+        if let Some(logger) = *logger {
             unsafe { logger(log) }
         }
-    };
+    }
 
     if let Some(logger) = config.logger.as_ref() {
-        if let Err(_) = LOGGER.set(*logger) {
-            return CString::new("attempted to set the logger more than once")
-                .unwrap()
-                .into_raw() as *mut c::libsql_error_t;
-        }
+        let mut guard = RT.block_on(LOGGER.write());
+        *guard = Some(*logger);
     }
 
     if config.version.is_null().not() {
         let s = unsafe { CStr::from_ptr(config.version) };
-        if let Err(_) = VERSION.set(s.to_string_lossy().to_string()) {
-            return CString::new("attempted to set the version more than once")
-                .unwrap()
-                .into_raw() as *mut c::libsql_error_t;
-        }
+        let mut version = RT.block_on(VERSION.write());
+
+        *version = Some(s.to_string_lossy().to_string());
     }
 
     SETUP.call_once(|| {
         tracing_subscriber::registry()
-            .with(EnvFilter::builder().parse_lossy("trace"))
             .with(CallbackLayer { callback })
             .init();
     });
@@ -312,13 +324,16 @@ pub extern "C" fn libsql_database_init(desc: c::libsql_database_desc_t) -> c::li
                     db
                 };
 
-                let db = if let Some(version) = VERSION.get() {
-                    db.version(version.to_owned())
-                } else {
-                    db
-                };
+                RT.block_on(async {
+                    let version = VERSION.read().await;
+                    let db = if let Some(ref version) = *version {
+                        db.version(version.to_owned())
+                    } else {
+                        db
+                    };
 
-                RT.block_on(db.build())
+                    db.build().await
+                })
             }
             (Some(path), Some(url), auth_token) => {
                 let db = libsql::Builder::new_remote_replica(
@@ -363,13 +378,16 @@ pub extern "C" fn libsql_database_init(desc: c::libsql_database_desc_t) -> c::li
                     db
                 };
 
-                let db = if let Some(version) = VERSION.get() {
-                    db.version(version.to_owned())
-                } else {
-                    db
-                };
+                RT.block_on(async {
+                    let version = VERSION.read().await;
+                    let db = if let Some(ref version) = *version {
+                        db.version(version.to_owned())
+                    } else {
+                        db
+                    };
 
-                RT.block_on(db.build())
+                    db.build().await
+                })
             }
             _ => bail!("invalid database description"),
         };
@@ -1019,6 +1037,7 @@ pub extern "C" fn libsql_slice_deinit(s: c::libsql_slice_t) {
     drop(unsafe { Box::from_raw(s) })
 }
 
+// TODOOOOO: Fix this mess.
 #[cfg(test)]
 mod tests {
     use crate::{libsql_database_deinit, libsql_row_empty, libsql_setup};
@@ -1094,9 +1113,23 @@ mod tests {
             let path = CString::new("./test.db")?;
             let version = CString::new("libsql-c")?;
 
+            extern "C" fn callback(log: libsql_log_t) {
+                dbg!((
+                    unsafe { CStr::from_ptr(log.message) },
+                    unsafe { CStr::from_ptr(log.target) },
+                    log.level,
+                ));
+            }
+
+            extern "C" fn callback2(log: libsql_log_t) {
+                dbg!(unsafe { CStr::from_ptr(log.message) });
+            }
+
+            tracing::error!("we are fucked");
+
             let setup = libsql_setup(libsql_config_t {
                 version: version.as_ptr(),
-                ..Default::default()
+                logger: Some(callback),
             });
             assert!(setup.is_null());
 
@@ -1116,6 +1149,12 @@ mod tests {
             )?;
             let batch = libsql_connection_batch(conn, sql.as_ptr());
             assert!(batch.err.is_null());
+
+            let setup = libsql_setup(libsql_config_t {
+                logger: Some(callback2),
+                ..Default::default()
+            });
+            assert!(setup.is_null());
 
             let sql = CString::new("insert into test values (:i, :r, :t, :b)")?;
             let stmt = libsql_connection_prepare(conn, sql.as_ptr());

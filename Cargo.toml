@@ -18,7 +18,6 @@ hyper-rustls = { version = "0.25", features = ["webpki-roots"]}
 anyhow = "1.0.86"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter", "json"] }
 tracing = "0.1.40"
-once_cell = "1.19.0"
 libsql-c-macros = { path = "macros" }
 
 [build-dependencies]

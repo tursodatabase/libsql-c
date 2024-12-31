@@ -866,7 +866,6 @@ dependencies = [
  "lazy_static",
  "libsql",
  "libsql-c-macros",
- "once_cell",
  "tokio",
  "tracing",
  "tracing-subscriber",
