@@ -1125,8 +1125,6 @@ mod tests {
                 dbg!(unsafe { CStr::from_ptr(log.message) });
             }
 
-            tracing::error!("we are fucked");
-
             let setup = libsql_setup(libsql_config_t {
                 version: version.as_ptr(),
                 logger: Some(callback),

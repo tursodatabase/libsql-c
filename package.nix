@@ -32,12 +32,8 @@ craneLib.buildPackage {
   "CARGO_TARGET_${target}_LINKER" = "${stdenv.cc.targetPrefix}cc";
 
   RUSTFLAGS = "-C target-feature=-crt-static";
+  cargoExtraArgs = "--features encryption";
 
   HOST_CC = "${stdenv.cc.nativePrefix}cc";
   TARGET_CC = "${stdenv.cc.targetPrefix}cc";
-
-  BINDGEN_EXTRA_CLANG_ARGS =
-    if stdenv.isDarwin
-    then "-isystem ${apple-sdk.sdkroot}/usr/include"
-    else "-isystem ${stdenv.cc.libc.dev}/include";
 }

@@ -19,7 +19,7 @@
         };
         toUpper = pkgs.lib.strings.toUpper;
         rust = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
-        craneLib = pkgs.lib.debug.traveVal ((crane.mkLib pkgs).overrideToolchain rust);
+        craneLib = (crane.mkLib pkgs).overrideToolchain rust;
         cargofy = s: builtins.replaceStrings [ "-" ] [ "_" ] s;
         env = config: cc: {
           nativeBuildInputs = [ cc ];
