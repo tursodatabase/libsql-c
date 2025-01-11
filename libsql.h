@@ -134,6 +134,10 @@ typedef struct {
     bool disable_read_your_writes;
     /** Enable Webpki connector */
     bool webpki;
+    /** Offline writes */
+    bool synced;
+    /** Safety assert */
+    bool disable_safety_assert;
 } libsql_database_desc_t;
 
 typedef struct {

@@ -443,6 +443,10 @@ pub struct libsql_database_desc_t {
     pub disable_read_your_writes: bool,
     #[doc = " Enable Webpki connector"]
     pub webpki: bool,
+    #[doc = " Offline writes"]
+    pub synced: bool,
+    #[doc = " Safety assert"]
+    pub disable_safety_assert: bool,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
@@ -465,6 +469,10 @@ const _: () = {
         [::std::mem::offset_of!(libsql_database_desc_t, disable_read_your_writes) - 44usize];
     ["Offset of field: libsql_database_desc_t::webpki"]
         [::std::mem::offset_of!(libsql_database_desc_t, webpki) - 45usize];
+    ["Offset of field: libsql_database_desc_t::synced"]
+        [::std::mem::offset_of!(libsql_database_desc_t, synced) - 46usize];
+    ["Offset of field: libsql_database_desc_t::disable_safety_assert"]
+        [::std::mem::offset_of!(libsql_database_desc_t, disable_safety_assert) - 47usize];
 };
 impl Default for libsql_database_desc_t {
     fn default() -> Self {

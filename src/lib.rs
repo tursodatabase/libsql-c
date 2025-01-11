@@ -279,14 +279,15 @@ pub extern "C" fn libsql_database_init(desc: c::libsql_database_desc_t) -> c::li
             .not()
             .then(|| unsafe { CStr::from_ptr(desc.encryption_key) });
 
-        let db = match (path, url, auth_token) {
-            (None, None, None) => {
+        let db = match (path, url, auth_token, desc.synced) {
+            (None, None, None, _) => {
                 let db = libsql::Builder::new_local(":memory:");
+                let db = unsafe { db.skip_saftey_assert(desc.disable_safety_assert) };
                 RT.block_on(db.build())
             }
-            (Some(path), None, None) => {
+            (Some(path), None, None, _) => {
                 let db = libsql::Builder::new_local(path.to_str()?);
-
+                let db = unsafe { db.skip_saftey_assert(desc.disable_safety_assert) };
                 let db = match (desc.cypher, encryption_key) {
                     (
                         c::libsql_cypher_t::LIBSQL_CYPHER_AES256
@@ -306,7 +307,7 @@ pub extern "C" fn libsql_database_init(desc: c::libsql_database_desc_t) -> c::li
                     Ok(db)
                 })
             }
-            (None, Some(url), Some(auth_token)) => {
+            (None, Some(url), Some(auth_token), _) => {
                 let db = libsql::Builder::new_remote(
                     url.to_str()?.to_string(),
                     auth_token.to_str()?.to_string(),
@@ -335,7 +336,40 @@ pub extern "C" fn libsql_database_init(desc: c::libsql_database_desc_t) -> c::li
                     db.build().await
                 })
             }
-            (Some(path), Some(url), auth_token) => {
+            (Some(path), Some(url), auth_token, true) => {
+                let db = libsql::Builder::new_synced_database(
+                    path.to_str()?,
+                    url.to_str()?.to_string(),
+                    match auth_token {
+                        Some(s) => s.to_str()?.to_string(),
+                        None => "".to_string(),
+                    },
+                );
+
+                let db = if desc.webpki {
+                    let connector = hyper_rustls::HttpsConnectorBuilder::new()
+                        .with_webpki_roots()
+                        .https_or_http()
+                        .enable_http1()
+                        .build();
+
+                    db.connector(connector)
+                } else {
+                    db
+                };
+
+                RT.block_on(async {
+                    let version = VERSION.read().await;
+                    let db = if let Some(ref version) = *version {
+                        db.version(version.to_owned())
+                    } else {
+                        db
+                    };
+
+                    db.build().await
+                })
+            }
+            (Some(path), Some(url), auth_token, false) => {
                 let db = libsql::Builder::new_remote_replica(
                     path.to_str()?,
                     url.to_str()?.to_string(),
@@ -343,11 +377,11 @@ pub extern "C" fn libsql_database_init(desc: c::libsql_database_desc_t) -> c::li
                         Some(s) => s.to_str()?.to_string(),
                         None => "".to_string(),
                     },
-                )
+                );
                 // NOTE: This is done so that the default zero initialization respects that
                 // read_your_writes is true by default.
-                .read_your_writes(desc.disable_read_your_writes.not());
-
+                let db = db.read_your_writes(desc.disable_read_your_writes.not());
+                let db = unsafe { db.skip_saftey_assert(desc.disable_safety_assert) };
                 let db = match (desc.cypher, encryption_key) {
                     (
                         c::libsql_cypher_t::LIBSQL_CYPHER_AES256
