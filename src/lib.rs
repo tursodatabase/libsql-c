@@ -29,7 +29,7 @@ mod c {
 
     use core::slice;
     use std::{
-        ffi::{c_void, CString},
+        ffi::{c_char, c_void, CStr, CString},
         mem::ManuallyDrop,
     };
 
@@ -91,10 +91,11 @@ mod c {
                 }
                 libsql_type_t::LIBSQL_TYPE_REAL => libsql::Value::Real(unsafe { value.value.real }),
                 libsql_type_t::LIBSQL_TYPE_TEXT => {
-                    libsql::Value::Text(String::from_utf8(unsafe {
-                        slice::from_raw_parts(value.value.text.ptr as *mut u8, value.value.text.len)
-                            .to_vec()
-                    })?)
+                    libsql::Value::Text(
+                        unsafe { CStr::from_ptr(value.value.text.ptr as *mut c_char) }
+                            .to_str()?
+                            .to_string(),
+                    )
                 }
                 libsql_type_t::LIBSQL_TYPE_BLOB => libsql::Value::Blob(unsafe {
                     slice::from_raw_parts(value.value.text.ptr as *mut u8, value.value.text.len)
@@ -110,7 +111,7 @@ lazy_static! {
     static ref RT: Runtime = Runtime::new().unwrap();
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 enum Params {
     None,
     Positional(Vec<libsql::Value>),
