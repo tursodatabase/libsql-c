@@ -90,13 +90,11 @@ mod c {
                     libsql::Value::Integer(unsafe { value.value.integer })
                 }
                 libsql_type_t::LIBSQL_TYPE_REAL => libsql::Value::Real(unsafe { value.value.real }),
-                libsql_type_t::LIBSQL_TYPE_TEXT => {
-                    libsql::Value::Text(
-                        unsafe { CStr::from_ptr(value.value.text.ptr as *mut c_char) }
-                            .to_str()?
-                            .to_string(),
-                    )
-                }
+                libsql_type_t::LIBSQL_TYPE_TEXT => libsql::Value::Text(
+                    unsafe { CStr::from_ptr(value.value.text.ptr as *mut c_char) }
+                        .to_str()?
+                        .to_string(),
+                ),
                 libsql_type_t::LIBSQL_TYPE_BLOB => libsql::Value::Blob(unsafe {
                     slice::from_raw_parts(value.value.text.ptr as *mut u8, value.value.text.len)
                         .to_vec()
@@ -1114,7 +1112,7 @@ mod tests {
 
             let row = libsql_rows_next(rows);
             assert!(row.err.is_null());
-            assert_eq!(libsql_row_empty(row), false);
+            assert!(!libsql_row_empty(row));
 
             let name = libsql_row_name(row, 0);
             assert!(name.ptr.is_null().not());

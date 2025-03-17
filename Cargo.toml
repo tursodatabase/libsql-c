@@ -5,7 +5,7 @@ edition = "2021"
 
 [lib]
 name = "libsql"
-crate-type = ["dylib", "staticlib"]
+crate-type = ["cdylib", "staticlib"]
 
 [features]
 encryption = ["libsql/encryption"]
@@ -22,3 +22,9 @@ libsql-c-macros = { path = "macros" }
 
 [build-dependencies]
 bindgen = "0.69.5"
+
+[profile.release]
+debug = "line-tables-only"
+codegen-units = 1
+panic = "abort"
+lto = true
