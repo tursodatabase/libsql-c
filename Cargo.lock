@@ -832,7 +832,7 @@ dependencies = [
 [[package]]
 name = "libsql"
 version = "0.6.0"
-source = "git+https://github.com/levydsa/libsql.git?branch=fix_cross_mac#3ad67a8ecf8a5a1070479bc5b1f16d2bd5357be3"
+source = "git+https://github.com/levydsa/libsql.git#3ad67a8ecf8a5a1070479bc5b1f16d2bd5357be3"
 dependencies = [
  "anyhow",
  "async-stream",
@@ -895,7 +895,7 @@ dependencies = [
 [[package]]
 name = "libsql-ffi"
 version = "0.5.0"
-source = "git+https://github.com/levydsa/libsql.git?branch=fix_cross_mac#3ad67a8ecf8a5a1070479bc5b1f16d2bd5357be3"
+source = "git+https://github.com/levydsa/libsql.git#3ad67a8ecf8a5a1070479bc5b1f16d2bd5357be3"
 dependencies = [
  "bindgen 0.66.1",
  "cc",
@@ -905,7 +905,7 @@ dependencies = [
 [[package]]
 name = "libsql-hrana"
 version = "0.2.0"
-source = "git+https://github.com/levydsa/libsql.git?branch=fix_cross_mac#3ad67a8ecf8a5a1070479bc5b1f16d2bd5357be3"
+source = "git+https://github.com/levydsa/libsql.git#3ad67a8ecf8a5a1070479bc5b1f16d2bd5357be3"
 dependencies = [
  "base64",
  "bytes",
@@ -916,7 +916,7 @@ dependencies = [
 [[package]]
 name = "libsql-rusqlite"
 version = "0.33.0"
-source = "git+https://github.com/levydsa/libsql.git?branch=fix_cross_mac#3ad67a8ecf8a5a1070479bc5b1f16d2bd5357be3"
+source = "git+https://github.com/levydsa/libsql.git#3ad67a8ecf8a5a1070479bc5b1f16d2bd5357be3"
 dependencies = [
  "bitflags 2.9.0",
  "fallible-iterator 0.2.0",
@@ -929,7 +929,7 @@ dependencies = [
 [[package]]
 name = "libsql-sqlite3-parser"
 version = "0.13.0"
-source = "git+https://github.com/levydsa/libsql.git?branch=fix_cross_mac#3ad67a8ecf8a5a1070479bc5b1f16d2bd5357be3"
+source = "git+https://github.com/levydsa/libsql.git#3ad67a8ecf8a5a1070479bc5b1f16d2bd5357be3"
 dependencies = [
  "bitflags 2.9.0",
  "cc",
@@ -946,7 +946,7 @@ dependencies = [
 [[package]]
 name = "libsql-sys"
 version = "0.8.0"
-source = "git+https://github.com/levydsa/libsql.git?branch=fix_cross_mac#3ad67a8ecf8a5a1070479bc5b1f16d2bd5357be3"
+source = "git+https://github.com/levydsa/libsql.git#3ad67a8ecf8a5a1070479bc5b1f16d2bd5357be3"
 dependencies = [
  "bytes",
  "libsql-ffi",
@@ -959,7 +959,7 @@ dependencies = [
 [[package]]
 name = "libsql_replication"
 version = "0.6.0"
-source = "git+https://github.com/levydsa/libsql.git?branch=fix_cross_mac#3ad67a8ecf8a5a1070479bc5b1f16d2bd5357be3"
+source = "git+https://github.com/levydsa/libsql.git#3ad67a8ecf8a5a1070479bc5b1f16d2bd5357be3"
 dependencies = [
  "aes",
  "async-stream",
