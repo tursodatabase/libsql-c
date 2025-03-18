@@ -24,6 +24,8 @@ libsql-c-macros = { path = "macros" }
 bindgen = "0.69.5"
 
 [profile.release]
+strip=true
+opt-level = "z"
 debug = "line-tables-only"
 codegen-units = 1
 panic = "abort"
