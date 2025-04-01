@@ -306,10 +306,13 @@ pub extern "C" fn libsql_database_init(desc: c::libsql_database_desc_t) -> c::li
                     Ok(db)
                 })
             }
-            (None, Some(url), Some(auth_token), _) => {
+            (None, Some(url), auth_token, _) => {
                 let db = libsql::Builder::new_remote(
                     url.to_str()?.to_string(),
-                    auth_token.to_str()?.to_string(),
+                    match auth_token {
+                        Some(auth_token) => auth_token.to_str()?.to_string(),
+                        None => "".to_string(),
+                    }
                 );
 
                 let db = if desc.webpki {
