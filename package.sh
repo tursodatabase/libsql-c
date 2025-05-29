@@ -2,7 +2,11 @@
 set -xe
 
 target="${1:?"explit target is required"}"
-manifest="$(realpath ${2:?"explicit manifest path is required"})"
+if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
+    manifest="$(powershell -Command "[System.IO.Path]::GetFullPath('$2')")"
+else
+    manifest="$(realpath ${2:?"explicit manifest path is required"})"
+fi
 extra="${3:-}"
 
 artifacts=$(
