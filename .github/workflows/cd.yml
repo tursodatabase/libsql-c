@@ -57,6 +57,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: dist
+          name: ${{ matrix.TARGET }}
 
   windows:
     name: Release - ${{ matrix.target }}
@@ -97,6 +98,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: dist
+          name: ${{ matrix.TARGET }}
 
   macos:
     name: Release - ${{ matrix.name }}
@@ -107,10 +109,8 @@ jobs:
         include:
           - name:  macos-x86_64
             target: x86_64-apple-darwin
-            archive-name: macos-x86_64
           - name:  macos-aarch64
             target: aarch64-apple-darwin
-            archive-name: macos-aarch64
     env:
       TARGET: ${{ matrix.target }}
       MACOSX_DEPLOYMENT_TARGET: "10.13"
@@ -134,6 +134,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           path: dist
+          name: ${{ matrix.TARGET }}
 
   publish:
     name: Publish Github release
