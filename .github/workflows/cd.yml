@@ -11,7 +11,7 @@ on:
 
 jobs:
   linux:
-    name: Release - ${{ matrix.name }}
+    name: Release - ${{ matrix.target }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
@@ -46,7 +46,7 @@ jobs:
             curl --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain none && \
             rustup toolchain install --no-self-update $TOOLCHAIN && \
             rustup default $TOOLCHAIN && \
-            ./package $TARGET ./Cargo.toml")
+            ./package.sh $TARGET ./Cargo.toml")
           docker start -ai $CID
           mkdir -p dist
           docker cp $CID:/tmp/libsql/dist/. dist/.
@@ -90,7 +90,7 @@ jobs:
           key: build-${{ env.TARGET }}-${{ env.CACHE_SUFFIX }}
 
       - name: Build
-        run: ./package $TARGET ./Cargo.toml
+        run: ./package.sh $TARGET ./Cargo.toml
         shell: bash
 
       - name: Upload
