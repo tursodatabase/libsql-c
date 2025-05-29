@@ -15,10 +15,10 @@ artifacts=$(
     --target $target \
     --manifest-path $manifest \
     $extra \
-    | jq -r "
-          select(.manifest_path == \"${manifest}\")
+    | jq -r --arg manifest "$manifest" '
+          select(.manifest_path == $manifest)
           | .filenames[]
-      "
+      '
 )
 
 artifacts_dir="$(echo "$artifacts" | sed '1s|/[^/]*$||;q')"
