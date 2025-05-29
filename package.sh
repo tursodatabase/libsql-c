@@ -21,8 +21,8 @@ artifacts=$(
       '
 )
 
-artifacts_dir="$(echo "$artifacts" | sed '1s|/[^/]*$||;q')"
-type="$(echo "$artifacts_dir" | sed 's|.*/||')"
+artifacts_dir="$(echo "$artifacts" | sed '1s|[/\\][^/\\]*$||;q')"
+type="$(echo "$artifacts_dir" | sed 's|.*[/\\]||')"
 
 mkdir -p dist/
 
