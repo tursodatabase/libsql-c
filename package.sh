@@ -20,15 +20,8 @@ artifacts=$(
 artifacts_dir="$(echo "$artifacts" | sed '1s|/[^/]*$||;q')"
 type="$(echo "$artifacts_dir" | sed 's|.*/||')"
 
-echo $artifacts_dir
-echo "$(echo "$artifacts" | sed 's|.*/||')"
-
 mkdir -p dist/
 
-echo "$artifacts" \
-  | sed 's|.*/||' \
-  | tar -cf dist/$target-$type.tar -C $artifacts_dir -T -
+echo "$artifacts" | zip -j@ dist/$target-$type.zip
 
-tar -rf dist/$target-$type.tar -C $(dirname $manifest) libsql.h
-
-gzip dist/$target-$type.tar
+zip -j dist/$target-$type.zip "$(dirname $manifest)/libsql.h"
