@@ -7,25 +7,27 @@ if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
 else
     manifest="$(realpath ${2:?"explicit manifest path is required"})"
 fi
-extra="${3:-}"
 
-artifacts=$(
-  cargo build \
-    --message-format json \
-    --target $target \
-    --manifest-path $manifest \
-    $extra \
-    | jq -r --arg manifest "$manifest" '
-          select(.manifest_path == $manifest)
-          | .filenames[]
-      '
-)
+for extra in '' --release; do
+  artifacts=$(
+    cargo build \
+      --message-format json \
+      --target $target \
+      --manifest-path $manifest \
+      $extra \
+      | jq -r --arg manifest "$manifest" '
+            select(.manifest_path == $manifest)
+            | .filenames[]
+        '
+  )
 
-artifacts_dir="$(echo "$artifacts" | sed '1s|[/\\][^/\\]*$||;q')"
-type="$(echo "$artifacts_dir" | sed 's|.*[/\\]||')"
+  artifacts_dir="$(echo "$artifacts" | sed '1s|[/\\][^/\\]*$||;q')"
+  type="$(echo "$artifacts_dir" | sed 's|.*[/\\]||')"
 
-mkdir -p dist/
+  mkdir -p dist/
 
-echo "$artifacts" | zip -j@ dist/$target-$type.zip
+  echo "$artifacts" | zip -j@ dist/$target-$type.zip
 
-zip -j dist/$target-$type.zip "$(dirname $manifest)/libsql.h"
+  zip -j dist/$target-$type.zip "$(dirname $manifest)/libsql.h"
+done
+
