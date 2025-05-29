@@ -90,6 +90,9 @@ jobs:
         with:
           key: build-${{ env.TARGET }}-${{ env.CACHE_SUFFIX }}
 
+      - name: Install zip
+        run: choco install zip
+
       - name: Build
         run: ./package.sh $TARGET ./Cargo.toml && ls
         shell: bash
