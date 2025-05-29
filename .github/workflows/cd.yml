@@ -46,7 +46,7 @@ jobs:
             curl --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain none && \
             rustup toolchain install --no-self-update $TOOLCHAIN && \
             rustup default $TOOLCHAIN && \
-            dnf install jq zig -y && \
+            dnf install jq zip -y && \
             ./package.sh $TARGET ./Cargo.toml")
           docker start -ai $CID
           mkdir -p dist
