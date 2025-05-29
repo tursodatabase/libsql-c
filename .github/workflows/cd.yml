@@ -68,8 +68,6 @@ jobs:
         include:
           - target: x86_64-pc-windows-msvc
             toolchain: stable-msvc
-          - target: i686-pc-windows-msvc
-            toolchain: stable-msvc
           - target: aarch64-pc-windows-msvc
             toolchain: stable-msvc
           - target: x86_64-pc-windows-gnu
