@@ -7,7 +7,6 @@ on:
   workflow_dispatch:
   push:
     tags: ["v*"]
-    branches: [main, cd]
 
 jobs:
   linux:
