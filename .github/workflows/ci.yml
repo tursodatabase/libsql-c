@@ -19,6 +19,10 @@ jobs:
       - name: Install Rust
         run: rustup update stable && rustup default stable
 
+      - name: Install bindgen-cli
+        run:
+            cargo install bindgen-cli
+
       - name: Check bindings
         run: |
           ./bindgen.sh
