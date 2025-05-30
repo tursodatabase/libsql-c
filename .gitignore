@@ -6,3 +6,4 @@ local.db
 example
 result
 .direnv/
+dist/

@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Rust
+        run: rustup update stable && rustup default stable
+
+      - name: Setup caching
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install bindgen-cli
+        run:
+            cargo install bindgen-cli
+
+      - name: Check bindings
+        run: |
+          ./bindgen.sh
+          git diff --exit-code src/bindings.rs
+
+      - name: Check
+        run: cargo fmt --all --check
+
+      - name: Build
+        run: cargo build --verbose
+
+      - name: Tests
+        run: cargo test --verbose

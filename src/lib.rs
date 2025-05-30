@@ -15,10 +15,10 @@ use tokio::{runtime::Runtime, sync::RwLock};
 use libsql_c_macros::signature;
 use tracing::{Event, Level, Subscriber};
 use tracing_subscriber::{
-    fmt::format::Writer,
+    fmt::{self, format::Writer},
     layer::{Context, SubscriberExt},
     util::SubscriberInitExt,
-    Layer,
+    EnvFilter, Layer,
 };
 
 mod c {
@@ -169,8 +169,7 @@ where
 {
     fn on_event(&self, event: &Event<'_>, _ctx: Context<'_, S>) {
         let mut buffer = String::new();
-        let mut visitor =
-            tracing_subscriber::fmt::format::DefaultVisitor::new(Writer::new(&mut buffer), true);
+        let mut visitor = fmt::format::DefaultVisitor::new(Writer::new(&mut buffer), true);
 
         let level = match *event.metadata().level() {
             Level::ERROR => c::libsql_tracing_level_t::LIBSQL_TRACING_LEVEL_ERROR,
@@ -237,6 +236,7 @@ pub extern "C" fn libsql_setup(config: c::libsql_config_t) -> *const c::libsql_e
 
     SETUP.call_once(|| {
         tracing_subscriber::registry()
+            .with(fmt::layer().with_filter(EnvFilter::from_default_env()))
             .with(CallbackLayer { callback })
             .init();
     });
@@ -312,7 +312,7 @@ pub extern "C" fn libsql_database_init(desc: c::libsql_database_desc_t) -> c::li
                     match auth_token {
                         Some(auth_token) => auth_token.to_str()?.to_string(),
                         None => "".to_string(),
-                    }
+                    },
                 );
 
                 let db = if desc.webpki {
