@@ -24,7 +24,7 @@ jobs:
 
       - name: Install bindgen-cli
         run:
-            cargo install bindgen-cli
+            cargo install --version 0.71.1 bindgen-cli
 
       - name: Check bindings
         run: |
