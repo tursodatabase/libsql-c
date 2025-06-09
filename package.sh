@@ -14,11 +14,14 @@ for extra in '' --release; do
       --message-format json \
       --target $target \
       --manifest-path $manifest \
-      $extra \
-      | jq -r --arg manifest "$manifest" '
-            select(.manifest_path == $manifest)
-            | .filenames[]
-        '
+      $extra
+  )
+
+  artifacts=$(
+    echo "$artifacts" | jq -r --arg manifest "$manifest" '
+      select(.manifest_path == $manifest)
+        | .filenames[]
+    '
   )
 
   artifacts_dir="$(echo "$artifacts" | sed '1s|[/\\][^/\\]*$||;q')"
