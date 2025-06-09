@@ -138,6 +138,8 @@ typedef struct {
     bool synced;
     /** Safety assert */
     bool disable_safety_assert;
+    /** Provide a namespace through a header. */
+    const char *namespace;
 } libsql_database_desc_t;
 
 typedef struct {

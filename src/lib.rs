@@ -307,7 +307,7 @@ pub extern "C" fn libsql_database_init(desc: c::libsql_database_desc_t) -> c::li
                 })
             }
             (None, Some(url), auth_token, _) => {
-                let db = libsql::Builder::new_remote(
+                let mut db = libsql::Builder::new_remote(
                     url.to_str()?.to_string(),
                     match auth_token {
                         Some(auth_token) => auth_token.to_str()?.to_string(),
@@ -315,17 +315,25 @@ pub extern "C" fn libsql_database_init(desc: c::libsql_database_desc_t) -> c::li
                     },
                 );
 
-                let db = if desc.webpki {
+                if desc.webpki {
                     let connector = hyper_rustls::HttpsConnectorBuilder::new()
                         .with_webpki_roots()
                         .https_or_http()
                         .enable_http1()
                         .build();
 
-                    db.connector(connector)
-                } else {
-                    db
+                    db = db.connector(connector)
                 };
+
+                let namespace = desc
+                    .namespace
+                    .is_null()
+                    .not()
+                    .then(|| unsafe { CStr::from_ptr(desc.namespace) });
+
+                if let Some(ns) = namespace {
+                    db = db.namespace(ns.to_str()?.to_string());
+                }
 
                 RT.block_on(async {
                     let version = VERSION.read().await;
@@ -1341,6 +1349,23 @@ mod tests {
             libsql_database_deinit(db);
 
             Ok(())
+        }
+    }
+
+    #[test]
+    fn test_init_database_with_namespace() {
+        unsafe {
+            let url = CString::new("http://127.0.0.1:8080").unwrap();
+            let namespace = CString::new("database-name").unwrap();
+
+            let desc = libsql_database_desc_t {
+                url: url.as_ptr(),
+                namespace: namespace.as_ptr(),
+                ..Default::default()
+            };
+
+            let db = libsql_database_init(desc);
+            assert!(db.err.is_null());
         }
     }
 }

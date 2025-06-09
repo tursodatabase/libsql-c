@@ -447,10 +447,12 @@ pub struct libsql_database_desc_t {
     pub synced: bool,
     #[doc = " Safety assert"]
     pub disable_safety_assert: bool,
+    #[doc = " Provide a namespace through a header."]
+    pub namespace: *const ::std::os::raw::c_char,
 }
 #[allow(clippy::unnecessary_operation, clippy::identity_op)]
 const _: () = {
-    ["Size of libsql_database_desc_t"][::std::mem::size_of::<libsql_database_desc_t>() - 48usize];
+    ["Size of libsql_database_desc_t"][::std::mem::size_of::<libsql_database_desc_t>() - 56usize];
     ["Alignment of libsql_database_desc_t"]
         [::std::mem::align_of::<libsql_database_desc_t>() - 8usize];
     ["Offset of field: libsql_database_desc_t::url"]
@@ -473,6 +475,8 @@ const _: () = {
         [::std::mem::offset_of!(libsql_database_desc_t, synced) - 46usize];
     ["Offset of field: libsql_database_desc_t::disable_safety_assert"]
         [::std::mem::offset_of!(libsql_database_desc_t, disable_safety_assert) - 47usize];
+    ["Offset of field: libsql_database_desc_t::namespace"]
+        [::std::mem::offset_of!(libsql_database_desc_t, namespace) - 48usize];
 };
 impl Default for libsql_database_desc_t {
     fn default() -> Self {
