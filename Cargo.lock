@@ -872,7 +872,7 @@ dependencies = [
 
 [[package]]
 name = "libsql-c"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "anyhow",
  "bindgen 0.69.5",
