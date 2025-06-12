@@ -281,12 +281,12 @@ pub extern "C" fn libsql_database_init(desc: c::libsql_database_desc_t) -> c::li
         let db = match (path, url, auth_token, desc.synced) {
             (None, None, None, _) => {
                 let db = libsql::Builder::new_local(":memory:");
-                let db = unsafe { db.skip_saftey_assert(desc.disable_safety_assert) };
+                let db = unsafe { db.skip_safety_assert(desc.disable_safety_assert) };
                 RT.block_on(db.build())
             }
             (Some(path), None, None, _) => {
                 let db = libsql::Builder::new_local(path.to_str()?);
-                let db = unsafe { db.skip_saftey_assert(desc.disable_safety_assert) };
+                let db = unsafe { db.skip_safety_assert(desc.disable_safety_assert) };
                 let db = match (desc.cypher, encryption_key) {
                     (
                         c::libsql_cypher_t::LIBSQL_CYPHER_AES256
@@ -391,7 +391,7 @@ pub extern "C" fn libsql_database_init(desc: c::libsql_database_desc_t) -> c::li
                 // NOTE: This is done so that the default zero initialization respects that
                 // read_your_writes is true by default.
                 let db = db.read_your_writes(desc.disable_read_your_writes.not());
-                let db = unsafe { db.skip_saftey_assert(desc.disable_safety_assert) };
+                let db = unsafe { db.skip_safety_assert(desc.disable_safety_assert) };
                 let db = match (desc.cypher, encryption_key) {
                     (
                         c::libsql_cypher_t::LIBSQL_CYPHER_AES256
