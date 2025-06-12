@@ -18,8 +18,8 @@ jobs:
         include:
           - target: x86_64-unknown-linux-gnu
             image: manylinux_2_28_x86_64
-          # - target: aarch64-unknown-linux-gnu
-          #   image: manylinux_2_28_aarch64
+          - target: aarch64-unknown-linux-gnu
+            image: manylinux_2_28_aarch64
 
     env:
       TARGET: ${{ matrix.target }}
@@ -67,10 +67,10 @@ jobs:
         include:
           - target: x86_64-pc-windows-msvc
             toolchain: stable-msvc
-          # - target: aarch64-pc-windows-msvc
-          #   toolchain: stable-msvc
-          # - target: x86_64-pc-windows-gnu
-          #   toolchain: stable-gnu
+          - target: aarch64-pc-windows-msvc
+            toolchain: stable-msvc
+          - target: x86_64-pc-windows-gnu
+            toolchain: stable-gnu
     env:
       TARGET: ${{ matrix.target }}
     steps:
@@ -86,9 +86,6 @@ jobs:
         uses: Swatinem/rust-cache@v2
         with:
           key: build-${{ env.TARGET }}-${{ env.CACHE_SUFFIX }}
-
-      - name: Install zip
-        run: choco install zip
 
       - name: Build
         run: ./package.sh $TARGET ./Cargo.toml && ls
@@ -107,10 +104,14 @@ jobs:
       fail-fast: true
       matrix:
         include:
-          # - name:  macos-x86_64
-          #  target: x86_64-apple-darwin
+          - name:  macos-x86_64
+            target: x86_64-apple-darwin
           - name:  macos-aarch64
             target: aarch64-apple-darwin
+          - name:  ios-aarch64
+            target: aarch64-apple-ios
+          - name:  ios-sim-aarch64
+            target: aarch64-apple-ios-sim
     env:
       TARGET: ${{ matrix.target }}
       MACOSX_DEPLOYMENT_TARGET: "10.13"
